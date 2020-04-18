@@ -1,0 +1,105 @@
+---
+title: "424_project"
+author: "MicahJona"
+date: "4/18/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readxl)
+library(ggplot2)
+library(gmodels)
+library(DescTools)
+```
+
+```{r}
+data <- as.data.frame(read_excel("Project_data.xlsx", sheet = 1, 
+                                         range = "A1:F28"))
+data$Microwave <- as.factor(data$Microwave)
+data$Time <- as.factor(data$Time)
+data$Brand <- as.factor(data$Brand)
+
+data <- data %>%
+  select(c("Microwave", "Brand", "Time", "Percentage"))
+data
+```
+
+ggplots of data
+```{r}
+ggplot(data, aes(x=Brand, y=Percentage, color = Microwave)) + 
+  geom_point() + 
+  facet_grid(~Time)
+```
+
+
+```{r}
+lm_data <- lm(Percentage ~ Microwave + Brand + Time, data=data, 
+               contrasts=list(Microwave=contr.sum(3), Brand=contr.sum(3), Time=contr.sum(3))) # p=3
+summary(lm_data) # estimation for mu, alpha_i, tau_j, beta_k
+
+plot(lm_data)
+```
+
+```{r}
+# doing it manually
+mean(data$Percentage) # estimate for mu
+
+aggregate(data$Percentage, list(data$Microwave), mean)$x-mean(data$Percentage) # estimate for alpha
+
+aggregate(data$Percentage, list(data$Brand), mean)$x-mean(data$Percentage) # estimate for tau
+
+aggregate(data$Percentage, list(data$Time), mean)$x-mean(data$Percentage) # estimate for beta
+
+confint(lm_data)
+```
+
+```{r}
+# Testing for treatment effect
+aov_data <- aov(Percentage ~ Microwave + Brand + Time, data=data)
+summary(aov_data)
+
+plot(aov_data)
+
+# Treatment Comparisons
+# Testing a single contrast
+C <- t(matrix(c(1,-1/2,-1/2), ncol=1))
+rownames(C) <- "a-b,c,"
+C
+
+fit.contrast(aov_data, "Brand", C)
+
+# Fisher's LSD for all pairwise comparison
+PostHocTest(aov_data, which="Brand", method = "lsd", conf.level = 0.95)
+
+PostHocTest(aov_data, which="Microwave", method = "lsd", conf.level = 0.95)
+
+PostHocTest(aov_data, which="Time", method = "lsd", conf.level = 0.95)
+
+
+# Bonferroni's method for all pairwise comparison
+PostHocTest(aov_data, which="Brand", method = "bonferroni", conf.level = 0.95)
+
+PostHocTest(aov_data, which="Microwave", method = "bonferroni", conf.level = 0.95)
+
+PostHocTest(aov_data, which="Time", method = "bonferroni", conf.level = 0.95)
+
+
+# Scheffe's method for all pairwise comparison
+PostHocTest(aov_data, which="Brand", method = "scheffe", conf.level = 0.95)
+
+PostHocTest(aov_data, which="Microwave", method = "scheffe", conf.level = 0.95)
+
+PostHocTest(aov_data, which="Time", method = "scheffe", conf.level = 0.95)
+
+
+# Tukey's method
+TukeyHSD(aov_data, which="Brand")
+
+TukeyHSD(aov_data, which="Microwave")
+
+TukeyHSD(aov_data, which="Time")
+```
+
+
+
