@@ -15,21 +15,20 @@ library(DescTools)
 
 ```{r}
 data <- as.data.frame(read_excel("Project_data.xlsx", sheet = 1, 
-                                         range = "A1:F28"))
+                                         range = "A1:D10"))
 data$Microwave <- as.factor(data$Microwave)
 data$Time <- as.factor(data$Time)
 data$Brand <- as.factor(data$Brand)
 
-data <- data %>%
-  select(c("Microwave", "Brand", "Time", "Percentage"))
 data
 ```
 
 ggplots of data
 ```{r}
-ggplot(data, aes(x=Brand, y=Percentage, color = Microwave)) + 
+ggplot(data, aes(x=Time, y=Percentage, color = Microwave)) + 
   geom_point() + 
-  facet_grid(~Time)
+  facet_grid(~Brand) + 
+  labs(x = "Time")
 ```
 
 
